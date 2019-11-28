@@ -1,0 +1,25 @@
+{
+  "name": "messenger-webhook2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "hello"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Israr-Mughal/kinectro.git"
+  },
+  "keywords": [
+    "israr"
+  ],
+  "author": "israr",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Israr-Mughal/kinectro/issues"
+  },
+  "homepage": "https://github.com/Israr-Mughal/kinectro#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
