@@ -8,8 +8,8 @@ const
   var xhub = require('express-x-hub');
 
 
-app.set('port', (process.env.PORT || 5000));
-app.listen(app.get('port'));
+// app.set('port', (process.env.PORT || 5000));
+// app.listen(app.get('port'));
 
 app.use(xhub({ algorithm: 'sha1', secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
@@ -18,11 +18,12 @@ var token = process.env.TOKEN || 'kinectro_webhook_token';
 var received_updates = [];
 
 app.get('/', function(req, res) {
-  console.log(req.body);
+  console.log("hit index url",req.body);
   res.send('<pre>' + JSON.stringify(received_updates, null, 2) + '</pre>');
 });
 
 app.get(['/facebook', '/instagram'], function(req, res) {
+  console.log("/facebook,/instagram")
   if (
     req.query['hub.mode'] == 'subscribe' &&
     req.query['hub.verify_token'] == token
@@ -49,8 +50,7 @@ app.post('/facebook', function(req, res) {
 });
 
 app.post('/instagram', function(req, res) {
-  console.log('Instagram request body:');
-  console.log(req.body);
+  console.log('instagram request body',req.body);
   // Process the Instagram updates here
   received_updates.unshift(req.body);
   res.sendStatus(200);
@@ -58,8 +58,9 @@ app.post('/instagram', function(req, res) {
 
 // ------------------
 // Sets server port and logs message on success
-app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
-
+// app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
+app.set('port', (process.env.PORT || 5000));
+app.listen(app.get('port'));
 
 // Creates the endpoint for our webhook 
 app.post('/webhook', (req, res) => {  
