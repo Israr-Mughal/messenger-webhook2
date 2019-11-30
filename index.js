@@ -5,7 +5,58 @@ const
   express = require('express'),
   bodyParser = require('body-parser'),
   app = express().use(bodyParser.json()); // creates express http server
+  var xhub = require('express-x-hub');
 
+
+app.set('port', (process.env.PORT || 5000));
+app.listen(app.get('port'));
+
+app.use(xhub({ algorithm: 'sha1', secret: process.env.APP_SECRET }));
+app.use(bodyParser.json());
+
+var token = process.env.TOKEN || 'kinectro_webhook_token';
+var received_updates = [];
+
+app.get('/', function(req, res) {
+  console.log(req.body);
+  res.send('<pre>' + JSON.stringify(received_updates, null, 2) + '</pre>');
+});
+
+app.get(['/facebook', '/instagram'], function(req, res) {
+  if (
+    req.query['hub.mode'] == 'subscribe' &&
+    req.query['hub.verify_token'] == token
+  ) {
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.sendStatus(400);
+  }
+});
+
+app.post('/facebook', function(req, res) {
+  console.log('Facebook request body:', req.body);
+
+  if (!req.isXHubValid()) {
+    console.log('Warning - request header X-Hub-Signature not present or invalid');
+    res.sendStatus(401);
+    return;
+  }
+
+  console.log('request header X-Hub-Signature validated');
+  // Process the Facebook updates here
+  received_updates.unshift(req.body);
+  res.sendStatus(200);
+});
+
+app.post('/instagram', function(req, res) {
+  console.log('Instagram request body:');
+  console.log(req.body);
+  // Process the Instagram updates here
+  received_updates.unshift(req.body);
+  res.sendStatus(200);
+});
+
+// ------------------
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
 
@@ -46,6 +97,9 @@ app.get('/webhook', (req, res) => {
   let mode = req.query['hub.mode'];
   let token = req.query['hub.verify_token'];
   let challenge = req.query['hub.challenge'];
+  console.log(mode);
+  console.log(token);
+  console.log(challenge);
     
   // Checks if a token and mode is in the query string of the request
   if (mode && token) {
