@@ -12,7 +12,7 @@ var xhub = require("express-x-hub");
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
 
-// var token = process.env.TOKEN || 'kinectro_webhook_token';
+var token = process.env.TOKEN || "kinectro_webhook_token";
 var received_updates = [];
 
 app.get("/", function(req, res) {
@@ -59,8 +59,6 @@ app.post("/instagram", function(req, res) {
 // ------------------
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 1337, () => console.log("webhook is listening"));
-// app.set('port', (process.env.PORT || 5000), () => console.log('webhook is listening'));
-// app.listen(app.get('port'));
 
 // Creates the endpoint for our webhook
 app.post("/webhook", (req, res) => {
@@ -76,7 +74,7 @@ app.post("/webhook", (req, res) => {
       console.log(webhook_event);
     });
 
-    // Returns a '200 OK' response to all requests
+    // Returns a OK response to all requests
     res.status(200).send("EVENT_RECEIVED");
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
