@@ -71,11 +71,11 @@ app.post("/webhook", (req, res) => {
       // Gets the message. entry.messaging is an array, but
       // will only ever contain one message, so we get index 0
       console.log("************");
+      console.log(entry.changes[0]);
       console.log("************");
       console.log("************");
-      console.log(entry.changes);
-      console.log(entry.changes.value.message);
-      let webhook_event = entry.messaging;
+      console.log(entry.changes[0].value.message);
+      let webhook_event = entry.changes[0].value.message;
       console.log(webhook_event);
     });
 
