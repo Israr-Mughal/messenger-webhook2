@@ -74,7 +74,8 @@ app.post("/webhook", (req, res) => {
       console.log("************")
       console.log("************")
       console.log("************")
-      console.log(entry.messaging)
+      console.log(entry.change)
+      console.log(entry[:changes][0][:value])
       let webhook_event = entry.messaging;
       console.log(webhook_event);
     });
