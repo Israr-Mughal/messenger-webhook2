@@ -5,6 +5,7 @@ const express = require("express"),
   bodyParser = require("body-parser"),
   app = express().use(bodyParser.json()); // creates express http server
 var xhub = require("express-x-hub");
+var http = require("http");
 
 // app.set('port', (process.env.PORT || 5000));
 // app.listen(app.get('port'));
@@ -80,8 +81,36 @@ app.post("/webhook", (req, res) => {
       console.log(entry.changes[0].value.from.name);
       console.log(entry.changes[0].value.post.permalink_url);
       console.log(entry.changes[0].value.message);
-      let webhook_event = entry.changes[0].value.message;
-      console.log(webhook_event);
+      let webhook_event = entry.changes[0];
+      var photoRequestStr = JSON.stringify(webhook_event);
+      var str = "";
+      var options = {
+        host: "3.87.54.185",
+        path: "/api/post_callback_webhook",
+        port: "80",
+        method: "POST",
+        headers: {
+          "Content-Length": photoRequestStr.length,
+          "Content-Type": "application/json"
+        }
+      };
+
+      http
+        .request(options, function(res) {
+          res.setEncoding("utf8");
+          res.on("data", function(data) {
+            str += data;
+          });
+
+          res.on("end", function() {
+            console.log(str);
+          });
+
+          res.on("error", function(error) {
+            console.log(error);
+          });
+        })
+        .end(photoRequestStr);
     });
 
     // Returns a OK response to all requests
@@ -112,6 +141,35 @@ app.get("/webhook", (req, res) => {
       // Responds with the challenge token from the request
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
+      var photoRequestStr = JSON.stringify(challenge);
+      var str = "";
+      var options = {
+        host: "3.87.54.185",
+        path: "/api/post_callback_webhook",
+        port: "80",
+        method: "POST",
+        headers: {
+          "Content-Length": photoRequestStr.length,
+          "Content-Type": "application/json"
+        }
+      };
+
+      http
+        .request(options, function(res) {
+          res.setEncoding("utf8");
+          res.on("data", function(data) {
+            str += data;
+          });
+
+          res.on("end", function() {
+            console.log(str);
+          });
+
+          res.on("error", function(error) {
+            console.log(error);
+          });
+        })
+        .end(photoRequestStr);
     } else {
       // Responds with '403 Forbidden' if verify tokens do not match
       res.sendStatus(403);
