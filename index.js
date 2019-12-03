@@ -75,12 +75,12 @@ app.post("/webhook", (req, res) => {
       console.log(entry.changes[0]);
       console.log("************");
       console.log("************");
-      console.log(entry.changes[0].value.message);
+      // console.log(entry.changes[0].value.message);
       console.log(entry.changes[0].value.post_id);
       console.log(entry.changes[0].value.comment_id);
-      console.log(entry.changes[0].value.from.name);
-      console.log(entry.changes[0].value.post.permalink_url);
-      console.log(entry.changes[0].value.message);
+      // console.log(entry.changes[0].value.from.name);
+      // console.log(entry.changes[0].value.post.permalink_url);
+      // console.log(entry.changes[0].value.message);
       let webhook_event = entry.changes[0];
       var photoRequestStr = JSON.stringify(webhook_event);
       var str = "";
