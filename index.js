@@ -78,9 +78,9 @@ app.post("/webhook", (req, res) => {
       var photoRequestStr = JSON.stringify(webhook_event);
       var str = "";
       var options = {
-        host: "localhost",
+        host: "3.87.54.185",
         path: "/api/post_callback_webhook",
-        port: "3000",
+        port: "80",
         method: "POST",
         headers: {
           "Content-Length": photoRequestStr.length,
