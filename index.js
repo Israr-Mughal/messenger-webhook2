@@ -72,9 +72,9 @@ app.post("/webhook", (req, res) => {
       // Gets the message. entry.messaging is an array, but
       // will only ever contain one message, so we get index 0
       console.log("************");
-      console.log(entry.changes[0]);
+      console.log(entry);
       console.log("************");
-      let webhook_event = entry.changes[0];
+      let webhook_event = entry;
       var photoRequestStr = JSON.stringify(webhook_event);
       var str = "";
       var options = {
