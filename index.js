@@ -64,7 +64,8 @@ app.listen(process.env.PORT || 1337, () => console.log("webhook is listening"));
 // Creates the endpoint for our webhook
 app.post("/webhook", (req, res) => {
   let body = req.body;
-
+  console.log("reques_body", body)
+  console.log("++++++++++");
   // Checks this is an event from a page subscription
   if (body.object === "page") {
     // Iterates over each entry - there may be multiple if batched
@@ -110,6 +111,7 @@ app.post("/webhook", (req, res) => {
     res.status(200).send("EVENT_RECEIVED");
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
+    console.log("status is 404 else condition")
     res.sendStatus(404);
   }
 });
