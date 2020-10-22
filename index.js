@@ -6,9 +6,10 @@ const express = require("express"),
   app = express().use(bodyParser.json()); // creates express http server
 var xhub = require("express-x-hub");
 var http = require("http");
+var request = require("request");
 
-// app.set('port', (process.env.PORT || 5000));
-// app.listen(app.get('port'));
+app.set('port', (process.env.PORT || 5000));
+app.listen(app.get('port'));
 
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
@@ -77,35 +78,30 @@ app.post("/webhook", (req, res) => {
       console.log("************");
       let webhook_event = entry;
       var photoRequestStr = JSON.stringify(webhook_event);
-      var str = "";
-      var options = {
-        host: "54.210.106.64",
-        path: "/api/post_callback_webhook",
-        port: "80",
-        method: "POST",
-        headers: {
-          "Content-Length": photoRequestStr.length,
-          "Content-Type": "application/json"
-        }
-      };
+      var formData = JSON.stringify(webhook_event);
 
-      http
-        .request(options, function(res) {
-          res.setEncoding("utf8");
-          res.on("data", function(data) {
-            str += data;
-          });
-
-          res.on("end", function() {
-            console.log(str);
-          });
-
-          res.on("error", function(error) {
-            console.log(error);
-          });
-        })
-        .end(photoRequestStr);
-    });
+       request(
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  url: "https://shuttlepro.io/api/post_callback_webhook",
+                  body: formData,
+                  method: "POST"
+                },
+                function(error, response, body) {
+                  try {
+                    if (!error && response.statusCode == 200) {
+                         apiresponse = response.body;
+                        console.log("er", response)
+                    }
+                  } catch (err) {
+                        console.log("error1", err)
+                    return ;
+                  }
+                }
+              );
+      });
 
     // Returns a OK response to all requests
     res.status(200).send("EVENT_RECEIVED");
