@@ -8,13 +8,13 @@ var xhub = require("express-x-hub");
 var http = require("http");
 var request = require("request");
 
-// app.set('port', (process.env.PORT || 5000));
-// app.listen(app.get('port'));
+app.set('port', (process.env.PORT || 5000));
+app.listen(app.get('port'));
 
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
 
-var token = process.env.TOKEN || "kinectro_webhook_token";
+var token = process.env.TOKEN || "shuttle_pro_webhook_token";
 var received_updates = [];
 
 app.get("/", function(req, res) {
@@ -84,8 +84,8 @@ app.post("/webhook", (req, res) => {
                 {
                   headers: {
                     "Content-Type": "application/json",
-                  },
-                  url: "https://shuttlepro.io/api/post_callback_webhook",
+                   },
+                  url: "http://localhost:3000/api/post_callback_webhook",
                   body: formData,
                   method: "POST"
                 },
@@ -115,7 +115,7 @@ app.post("/webhook", (req, res) => {
 // Adds support for GET requests to our webhook
 app.get("/webhook", (req, res) => {
   // Your verify token. Should be a random string.
-  let VERIFY_TOKEN = "kinectro_webhook_token";
+  let VERIFY_TOKEN = "shuttle_pro_webhook_token";
 
   // Parse the query params
   let mode = req.query["hub.mode"];
@@ -167,3 +167,12 @@ app.get("/webhook", (req, res) => {
     }
   }
 });
+
+
+
+
+
+// testing curl calls
+
+ // curl -H "Content-Type: application/json" -X POST "https://messenger-webhook3.herokuapp.com/webhook" -d '{"object": "page", "entry": [{"messaging": [{"message": "TEST_MESSAGE from israr"}]}]}'
+ // curl -X GET "https://messenger-webhook3.herokuapp.com/webhook?hub.verify_token=kinectro_webhook_token&hub.challenge=CHALLENGE_ACCEPTED&hub.mode=subscribe"
