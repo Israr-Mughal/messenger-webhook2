@@ -2,6 +2,8 @@
 //merge brannch add-url and relases
 // Imports dependencies and set up http server
 const express = require("express"),
+// const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+
   bodyParser = require("body-parser"),
   app = express().use(bodyParser.json()); // creates express http server
 var xhub = require("express-x-hub");
@@ -13,6 +15,8 @@ var request = require("request");
 
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
+
+var page_access_token = "EAAKOl6tKMTgBAOKemspfYcmqQ61JbDZAfbEIqPaCkIYFDvNNwYDe3BjvedQBGPKbiBrhB5fTnSOMdZAeTElx5M8NTIJosmvguGOV7S9MDydTnHsc7Ff2pE0yEQxRu72xd3d9Gx0ov8GjZCyhPa1LnZBTvR2vtBz7reNuZC4IMzLDr8cCJFG6l";
 
 var token = process.env.TOKEN || "kinectro_webhook_token";
 var received_updates = [];
@@ -66,19 +70,37 @@ app.listen(process.env.PORT || 1337, () => console.log("webhook is listening"));
 app.post("/webhook", (req, res) => {
   let body = req.body;
   console.log("reques_body", body)
-  console.log("++++++++++");
   // Checks this is an event from a page subscription
   if (body.object === "page") {
     // Iterates over each entry - there may be multiple if batched
     body.entry.forEach(function(entry) {
       // Gets the message. entry.messaging is an array, but
       // will only ever contain one message, so we get index 0
-      console.log("************");
-      console.log(entry);
-      console.log("************");
-      let webhook_event = entry;
+      // let webhook_event = entry;
+      // var photoRequestStr = JSON.stringify(webhook_event);
+      // var formData = JSON.stringify(webhook_event);
+
+
+      // Gets the body of the webhook event
+      let webhook_event = entry.messaging[0];
+      console.log(webhook_event);
+
       var photoRequestStr = JSON.stringify(webhook_event);
       var formData = JSON.stringify(webhook_event);
+
+      // Get the sender PSID
+      let sender_psid = webhook_event.sender.id;
+      console.log('Sender PSID: ' + sender_psid);
+
+      // Check if the event is a message or postback and
+      // pass the event to the appropriate handler function
+      if (webhook_event.message) {
+        handleMessage(sender_psid, webhook_event.message);        
+      } else if (webhook_event.postback) {
+        handlePostback(sender_psid, webhook_event.postback);
+      }
+
+
 
        request(
                 {
@@ -167,3 +189,63 @@ app.get("/webhook", (req, res) => {
     }
   }
 });
+
+// Handles messages events
+function handleMessage(sender_psid, received_message) {
+
+  let response;
+
+  // Check if the message contains text
+  if (received_message.text) {    
+
+    // Create the payload for a basic text message
+    response = {
+      "text": `You sent the message: "${received_message.text}". Now send me an image!`
+    }
+  }  
+  
+  // Sends the response message
+  callSendAPI(sender_psid, response);    
+} 
+  
+  // Sends the response message
+  function callSendAPI(sender_psid, response) {
+  // Construct the message body
+  let request_body = {
+    "recipient": {
+      "id": sender_psid
+    },
+    "message": response
+  }
+
+  // Send the HTTP request to the Messenger Platform
+  request({
+    "uri": "https://graph.facebook.com/v2.6/me/messages",
+    "qs": { "access_token": process.env.PAGE_ACCESS_TOKEN },
+    "method": "POST",
+    "json": request_body
+  }, (err, res, body) => {
+    if (!err) {
+      console.log('message sent!')
+    } else {
+      console.error("Unable to send message:" + err);
+    }
+  }); 
+}
+
+// Handles messaging_postbacks events
+function handlePostback(sender_psid, received_postback) {
+
+}
+
+// Sends response messages via the Send API
+function callSendAPI(sender_psid, response) {
+  
+}
+
+
+
+// testing curl calls
+
+ // curl -H "Content-Type: application/json" -X POST "https://messenger-webhook3.herokuapp.com/webhook" -d '{"object": "page", "entry": [{"messaging": [{"message": "TEST_MESSAGE from israr"}]}]}'
+ // curl -X GET "https://messenger-webhook3.herokuapp.com/webhook?hub.verify_token=kinectro_webhook_token&hub.challenge=CHALLENGE_ACCEPTED&hub.mode=subscribe"
