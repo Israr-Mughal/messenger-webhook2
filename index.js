@@ -10,8 +10,8 @@ var xhub = require("express-x-hub");
 var http = require("http");
 var request = require("request");
 
-// app.set('port', (process.env.PORT || 5000));
-// app.listen(app.get('port'));
+app.set('port', (process.env.PORT || 5000));
+app.listen(app.get('port'));
 
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
@@ -76,31 +76,35 @@ app.post("/webhook", (req, res) => {
     body.entry.forEach(function(entry) {
       // Gets the message. entry.messaging is an array, but
       // will only ever contain one message, so we get index 0
-      // let webhook_event = entry;
-      // var photoRequestStr = JSON.stringify(webhook_event);
-      // var formData = JSON.stringify(webhook_event);
 
+      if (entry.messaging[0].sender){
 
-      // Gets the body of the webhook event
-      let webhook_event = entry.messaging[0];
-      console.log(webhook_event);
+          // Gets the body of the webhook event
+          let webhook_event = entry.messaging[0];
+          console.log(webhook_event);
 
-      var photoRequestStr = JSON.stringify(webhook_event);
-      var formData = JSON.stringify(webhook_event);
+          // Get the sender PSID
+          let sender_psid = webhook_event.sender.id;
+          console.log('Sender PSID: ' + sender_psid);
 
-      // Get the sender PSID
-      let sender_psid = webhook_event.sender.id;
-      console.log('Sender PSID: ' + sender_psid);
+          // Check if the event is a message or postback and
+          // pass the event to the appropriate handler function
+          if (webhook_event.message) {
+            handleMessage(sender_psid, webhook_event.message);        
+          } else if (webhook_event.postback) {
+            handlePostback(sender_psid, webhook_event.postback);
+          }
 
-      // Check if the event is a message or postback and
-      // pass the event to the appropriate handler function
-      if (webhook_event.message) {
-        handleMessage(sender_psid, webhook_event.message);        
-      } else if (webhook_event.postback) {
-        handlePostback(sender_psid, webhook_event.postback);
+      } else {
+            let webhook_event = entry;
+            var photoRequestStr = JSON.stringify(webhook_event);
+            var formData = JSON.stringify(webhook_event);
+
+             var photoRequestStr = JSON.stringify(webhook_event);
+             var formData = JSON.stringify(webhook_event);
+
       }
-
-
+      
 
        request(
                 {
