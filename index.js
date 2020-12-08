@@ -65,12 +65,13 @@ app.post("/facebook", function (req, res) {
 });
 
 app.post("/instagram", function (req, res) {
-  console.log("instagram request body", (body = req.body));
+  let body = req.body;
+  console.log("instagram reques_body", body);
+
   // Process the Instagram updates here
   received_updates.unshift(req.body);
   if (body.object === "instagram") {
-    webhook_event = body.entry;
-    var formData = JSON.stringify(webhook_event);
+    var formData = JSON.stringify(body.entry);
 
     request(
       {
