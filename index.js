@@ -17,25 +17,22 @@ app.use(bodyParser.json());
 var token = process.env.TOKEN || "kinectro_webhook_token";
 var received_updates = [];
 
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
   console.log("hit index url", req.body);
   res.send("<pre>" + JSON.stringify(received_updates, null, 2) + "</pre>");
 });
 
 //callback URL: https://socailbites.herokuapp.com/instagram   VERIFY_TOKEN = "kinectro_webhook_token"
 
-app.get(["/facebook", "/instagram"], function(req, res) {
+app.get(["/facebook", "/instagram"], function (req, res) {
   console.log("/facebook,/instagram");
 
-   let VERIFY_TOKEN = "kinectro_webhook_token";
+  let VERIFY_TOKEN = "kinectro_webhook_token";
 
   // Parse the query params
   let mode = req.query["hub.mode"];
   let token = req.query["hub.verify_token"];
   let challenge = req.query["hub.challenge"];
-  console.log(mode);
-  console.log(token);
-  console.log(challenge);
 
   // Checks if a token and mode is in the query string of the request
   if (mode && token) {
@@ -45,20 +42,12 @@ app.get(["/facebook", "/instagram"], function(req, res) {
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
     }
-  }
-  // old code 
-  // if (
-  //   req.query["hub.mode"] == "subscribe" &&
-  //   req.query["hub.verify_token"] == VERIFY_TOKEN
-  // ) {
-  //   res.send(req.query["hub.challenge"]);
-  // }
-   else {
+  } else {
     res.sendStatus(400);
   }
 });
 
-app.post("/facebook", function(req, res) {
+app.post("/facebook", function (req, res) {
   console.log("Facebook request body:", req.body);
 
   if (!req.isXHubValid()) {
@@ -75,10 +64,36 @@ app.post("/facebook", function(req, res) {
   res.sendStatus(200);
 });
 
-app.post("/instagram", function(req, res) {
-  console.log("instagram request body", req.body);
+app.post("/instagram", function (req, res) {
+  console.log("instagram request body", (body = req.body));
   // Process the Instagram updates here
   received_updates.unshift(req.body);
+  if (body.object === "instagram") {
+    webhook_event = body.entry;
+    var formData = JSON.stringify(webhook_event);
+
+    request(
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        url: "https://shuttlepro.io/api/instagram_callback_webhook",
+        body: formData,
+        method: "POST",
+      },
+      function (error, response, body) {
+        try {
+          if (!error && response.statusCode == 200) {
+            apiresponse = response.body;
+            console.log("er", response);
+          }
+        } catch (err) {
+          console.log("error1", err);
+          return;
+        }
+      }
+    );
+  }
   res.sendStatus(200);
 });
 
@@ -89,12 +104,12 @@ app.listen(process.env.PORT || 1337, () => console.log("webhook is listening"));
 // Creates the endpoint for our webhook
 app.post("/webhook", (req, res) => {
   let body = req.body;
-  console.log("reques_body", body)
+  console.log("reques_body", body);
   console.log("++++++++++");
   // Checks this is an event from a page subscription
   if (body.object === "page") {
     // Iterates over each entry - there may be multiple if batched
-    body.entry.forEach(function(entry) {
+    body.entry.forEach(function (entry) {
       // Gets the message. entry.messaging is an array, but
       // will only ever contain one message, so we get index 0
       console.log("************");
@@ -104,34 +119,34 @@ app.post("/webhook", (req, res) => {
       var photoRequestStr = JSON.stringify(webhook_event);
       var formData = JSON.stringify(webhook_event);
 
-       request(
-                {
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  url: "https://shuttlepro.io/api/post_callback_webhook",
-                  body: formData,
-                  method: "POST"
-                },  
-                function(error, response, body) {
-                  try {
-                    if (!error && response.statusCode == 200) {
-                         apiresponse = response.body;
-                        console.log("er", response)
-                    }
-                  } catch (err) {
-                        console.log("error1", err)
-                    return ;
-                  }
-                }
-              );
-      });
+      request(
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          url: "https://shuttlepro.io/api/post_callback_webhook",
+          body: formData,
+          method: "POST",
+        },
+        function (error, response, body) {
+          try {
+            if (!error && response.statusCode == 200) {
+              apiresponse = response.body;
+              console.log("er", response);
+            }
+          } catch (err) {
+            console.log("error1", err);
+            return;
+          }
+        }
+      );
+    });
 
     // Returns a OK response to all requests
     res.status(200).send("EVENT_RECEIVED");
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
-    console.log("status is 404 else condition")
+    console.log("status is 404 else condition");
     res.sendStatus(404);
   }
 });
@@ -165,22 +180,22 @@ app.get("/webhook", (req, res) => {
         method: "POST",
         headers: {
           "Content-Length": photoRequestStr.length,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       };
 
       http
-        .request(options, function(res) {
+        .request(options, function (res) {
           res.setEncoding("utf8");
-          res.on("data", function(data) {
+          res.on("data", function (data) {
             str += data;
           });
 
-          res.on("end", function() {
+          res.on("end", function () {
             console.log(str);
           });
 
-          res.on("error", function(error) {
+          res.on("error", function (error) {
             console.log(error);
           });
         })
