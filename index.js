@@ -7,9 +7,15 @@ const express = require("express"),
 var xhub = require("express-x-hub");
 var http = require("http");
 var request = require("request");
+var admin = require("firebase-admin");
+var serviceAccount = require("./shuttlepro-demo-firebase-adminsdk-gjzrl-14e70c7e11.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://shuttlepro-demo.firebaseio.com",
+});
 
-// app.set('port', (process.env.PORT || 5000));
-// app.listen(app.get('port'));
+// app.set("port", process.env.PORT || 5000);
+// app.listen(app.get("port"));
 
 app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
@@ -109,31 +115,30 @@ app.post("/webhook", (req, res) => {
   console.log("++++++++++");
   // Checks this is an event from a page subscription
   if (body.object === "page") {
-    // Iterates over each entry - there may be multiple if batched
     body.entry.forEach(function (entry) {
-      // Gets the message. entry.messaging is an array, but
-      // will only ever contain one message, so we get index 0
       console.log("************");
       console.log(entry);
       console.log("************");
       let webhook_event = entry;
       var photoRequestStr = JSON.stringify(webhook_event);
       var formData = JSON.stringify(webhook_event);
-
+      //
       request(
         {
           headers: {
             "Content-Type": "application/json",
           },
           url: "https://shuttlepro.io/api/post_callback_webhook",
+          // url: "http://localhost:3000/api/post_callback_webhook",
           body: formData,
           method: "POST",
         },
         function (error, response, body) {
           try {
             if (!error && response.statusCode == 200) {
-              apiresponse = response.body;
-              console.log("er", response);
+              let apiresponse = body;
+              console.log("apiresponse", apiresponse);
+              sendMessage(apiresponse);
             }
           } catch (err) {
             console.log("error1", err);
@@ -145,6 +150,7 @@ app.post("/webhook", (req, res) => {
 
     // Returns a OK response to all requests
     res.status(200).send("EVENT_RECEIVED");
+    console.log("res is here", res);
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
     console.log("status is 404 else condition");
@@ -206,4 +212,72 @@ app.get("/webhook", (req, res) => {
       res.sendStatus(403);
     }
   }
+});
+
+async function sendMessage(data = null) {
+  // Fetch the tokens from an external datastore (e.g. database)
+  let notification = data ? JSON.parse(data) : null;
+  const tokens = [];
+  console.log(tokens);
+  await admin
+    .firestore()
+    .collection("Users")
+    .where(
+      "userId",
+      "in",
+      notification && notification.user_list ? notification.user_list : [1, 2]
+    )
+    .get()
+    .then((querySnapshot) => {
+      console.log("Total users: ", querySnapshot.size);
+      querySnapshot.forEach((documentSnapshot) => {
+        console.log(
+          "User ID: ",
+          documentSnapshot.id,
+          documentSnapshot.data().token
+        );
+        tokens.push(documentSnapshot.data().token);
+      });
+    });
+  // Send a message to devices with the registered tokens
+  if (tokens.length > 0) {
+    const aa = await admin.messaging().sendMulticast({
+      tokens, // ['token_1', 'token_2', ...]
+      data:
+        notification && notification.data
+          ? notification.data
+          : { type: "Message", parent_id: "2775519762494441" },
+      // data: { type: "Comment", id: "25" },
+
+      notification: {
+        title:
+          notification &&
+          notification.notification &&
+          notification.notification.title
+            ? notification.notification.title
+            : "Basic Notification",
+        body:
+          notification &&
+          notification.notification &&
+          notification.notification.body
+            ? notification.notification.body
+            : "This is a basic notification sent from the server!",
+        imageUrl: "https://my-cdn.com/app-logo.png",
+      },
+      // Required for background/quit data-only messages on iOS
+      contentAvailable: true,
+      // Required for background/quit data-only messages on Android
+      priority: "high",
+    });
+    console.log(aa);
+  } else {
+    console.log("Tokens not Availlable");
+  }
+}
+
+app.get("/notification", async (req, res) => {
+  res.status(200).send("WHATABYTE: Food For Devs");
+
+  // Send messages to our users
+  sendMessage();
 });
